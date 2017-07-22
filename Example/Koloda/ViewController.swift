@@ -66,7 +66,10 @@ extension ViewController: KolodaViewDelegate {
     func koloda(_ koloda: KolodaView, didSelectCardAt index: Int) {
         UIApplication.shared.openURL(URL(string: "https://yalantis.com/")!)
     }
-
+  
+    func kolodaSwipeThresholdRatioMargin(_ koloda: KolodaView) -> CGFloat? {
+        return 0.3
+    }
 }
 
 // MARK: KolodaViewDataSource
