@@ -9,6 +9,7 @@
 import UIKit
 import pop
 
+// muukii: unused
 public enum DragSpeed: TimeInterval {
     case slow = 2.0
     case moderate = 1.5
@@ -228,11 +229,8 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         case .changed:
             let rotationStrength = min(dragDistance.x / frame.width, rotationMax)
             let rotationAngle = animationDirectionY * defaultRotationAngle * rotationStrength
-            let scaleStrength = 1 - ((1 - scaleMin) * fabs(rotationStrength))
-            let scale = max(scaleStrength, scaleMin)
     
             var transform = CATransform3DIdentity
-            transform = CATransform3DScale(transform, scale, scale, 1)
             transform = CATransform3DRotate(transform, rotationAngle, 0, 0, 1)
             transform = CATransform3DTranslate(transform, dragDistance.x, dragDistance.y, 0)
             layer.transform = transform
@@ -245,7 +243,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
             }
             
         case .ended:
-            swipeMadeAction()
+            swipeMadeAction(gestureVelocity: gestureRecognizer.velocity(in: gestureRecognizer.view))
             
             layer.shouldRasterize = false
             
@@ -313,12 +311,12 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         overlayView?.update(progress: progress)
     }
     
-    private func swipeMadeAction() {
+    private func swipeMadeAction(gestureVelocity: CGPoint) {
         let shouldSwipe = { direction in
             return self.delegate?.card(self, shouldSwipeIn: direction) ?? true
         }
         if let dragDirection = dragDirection , shouldSwipe(dragDirection) && dragPercentage >= swipePercentageMargin && directions.contains(dragDirection) {
-            swipeAction(dragDirection)
+            swipeAction(dragDirection, gestureVelocity: gestureVelocity)
         } else {
             resetViewPositionAndTransformations()
         }
@@ -336,18 +334,26 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
     }
 
     
-    private func swipeAction(_ direction: SwipeResultDirection) {
+    private func swipeAction(_ direction: SwipeResultDirection, gestureVelocity: CGPoint) {
         overlayView?.overlayState = direction
         overlayView?.alpha = 1.0
         delegate?.card(self, wasSwipedIn: direction)
-        let translationAnimation = POPBasicAnimation(propertyNamed: kPOPLayerTranslationXY)
-        translationAnimation?.duration = cardSwipeActionAnimationDuration
-        translationAnimation?.fromValue = NSValue(cgPoint: POPLayerGetTranslationXY(layer))
-        translationAnimation?.toValue = NSValue(cgPoint: animationPointForDirection(direction))
-        translationAnimation?.completionBlock = { _, _ in
+        
+        let r = (screenSize.width + 100) / abs(gestureVelocity.x)
+        
+        let to = CGPoint(x: gestureVelocity.x * r, y: gestureVelocity.y * r)
+        
+        let a = POPSpringAnimation(propertyNamed: kPOPLayerTranslationXY)!
+        a.velocity = gestureVelocity
+        a.springSpeed = 1.0
+        a.springBounciness = 4
+        a.fromValue = NSValue(cgPoint: POPLayerGetTranslationXY(layer))
+        a.toValue = NSValue(cgPoint: to)
+        a.completionBlock = { _, _ in
             self.removeFromSuperview()
         }
-        layer.pop_add(translationAnimation, forKey: "swipeTranslationAnimation")
+        
+        layer.pop_add(a, forKey: "swipeTranslationAnimation")
     }
     
     private func resetViewPositionAndTransformations() {
