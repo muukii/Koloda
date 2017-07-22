@@ -339,16 +339,12 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         overlayView?.alpha = 1.0
         delegate?.card(self, wasSwipedIn: direction)
         
-        let r = (screenSize.width + 100) / abs(gestureVelocity.x)
-        
-        let to = CGPoint(x: gestureVelocity.x * r, y: gestureVelocity.y * r)
-        
         let a = POPSpringAnimation(propertyNamed: kPOPLayerTranslationXY)!
         a.velocity = gestureVelocity
         a.springSpeed = 1.0
         a.springBounciness = 4
         a.fromValue = NSValue(cgPoint: POPLayerGetTranslationXY(layer))
-        a.toValue = NSValue(cgPoint: to)
+        a.toValue = NSValue(cgPoint: CGPoint(x: direction.point.x * (screenSize.width + 100), y: POPLayerGetTranslationXY(layer).y))
         a.completionBlock = { _, _ in
             self.removeFromSuperview()
         }
