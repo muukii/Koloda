@@ -17,10 +17,15 @@ public enum DragSpeed: TimeInterval {
     case fast = 0.4
 }
 
+public enum SwipeWay {
+    case dragging
+    case programmatically
+}
+
 protocol DraggableCardDelegate: class {
     
     func card(_ card: DraggableCardView, wasDraggedWithFinishPercentage percentage: CGFloat, inDirection direction: SwipeResultDirection)
-    func card(_ card: DraggableCardView, wasSwipedIn direction: SwipeResultDirection)
+    func card(_ card: DraggableCardView, wasSwipedIn direction: SwipeResultDirection, wasSwipedby: SwipeWay)
     func card(_ card: DraggableCardView, shouldSwipeIn direction: SwipeResultDirection) -> Bool
     func card(cardWasReset card: DraggableCardView)
     func card(cardWasTapped card: DraggableCardView)
@@ -337,7 +342,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
     private func swipeAction(_ direction: SwipeResultDirection, gestureVelocity: CGPoint) {
         overlayView?.overlayState = direction
         overlayView?.alpha = 1.0
-        delegate?.card(self, wasSwipedIn: direction)
+        delegate?.card(self, wasSwipedIn: direction, wasSwipedby: .dragging)
         
         let a = POPSpringAnimation(propertyNamed: kPOPLayerTranslationXY)!
         a.velocity = gestureVelocity
@@ -399,7 +404,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
     
     func swipe(_ direction: SwipeResultDirection) {
         if !dragBegin {
-            delegate?.card(self, wasSwipedIn: direction)
+            delegate?.card(self, wasSwipedIn: direction, wasSwipedby: .programmatically)
             
             let swipePositionAnimation = POPBasicAnimation(propertyNamed: kPOPLayerTranslationXY)
             swipePositionAnimation?.fromValue = NSValue(cgPoint:POPLayerGetTranslationXY(layer))
