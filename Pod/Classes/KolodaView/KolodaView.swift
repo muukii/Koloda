@@ -24,7 +24,6 @@ private let defaultAlphaValueSemiTransparent: CGFloat = 0.7
 public protocol KolodaViewDataSource: class {
     
     func kolodaNumberOfCards(_ koloda: KolodaView) -> Int
-    func kolodaSpeedThatCardShouldDrag(_ koloda: KolodaView) -> DragSpeed
     func koloda(_ koloda: KolodaView, viewForCardAt index: Int) -> UIView
     func koloda(_ koloda: KolodaView, viewForCardOverlayAt index: Int) -> OverlayView?
 }
@@ -49,7 +48,6 @@ public protocol KolodaViewDelegate: class {
     func kolodaShouldTransparentizeNextCard(_ koloda: KolodaView) -> Bool
     func koloda(_ koloda: KolodaView, draggedCardWithPercentage finishPercentage: CGFloat, in direction: SwipeResultDirection)
     func kolodaDidResetCard(_ koloda: KolodaView)
-    func kolodaSwipeThresholdRatioMargin(_ koloda: KolodaView) -> CGFloat?
     func koloda(_ koloda: KolodaView, didShowCardAt index: Int)
     func koloda(_ koloda: KolodaView, shouldDragCardAt index: Int ) -> Bool
     
@@ -68,7 +66,6 @@ public extension KolodaViewDelegate {
     func kolodaShouldTransparentizeNextCard(_ koloda: KolodaView) -> Bool { return true }
     func koloda(_ koloda: KolodaView, draggedCardWithPercentage finishPercentage: CGFloat, in direction: SwipeResultDirection) {}
     func kolodaDidResetCard(_ koloda: KolodaView) {}
-    func kolodaSwipeThresholdRatioMargin(_ koloda: KolodaView) -> CGFloat? { return nil}
     func koloda(_ koloda: KolodaView, didShowCardAt index: Int) {}
     func koloda(_ koloda: KolodaView, shouldDragCardAt index: Int ) -> Bool { return true }
     
@@ -315,11 +312,7 @@ open class KolodaView: UIView, DraggableCardDelegate {
         let index = currentCardIndex + visibleIndex
         delegate?.koloda(self, didSelectCardAt: index)
     }
-    
-    func card(cardSwipeThresholdRatioMargin card: DraggableCardView) -> CGFloat? {
-        return delegate?.kolodaSwipeThresholdRatioMargin(self)
-    }
-    
+
     func card(cardShouldDrag card: DraggableCardView) -> Bool {
         guard let visibleIndex = visibleCards.index(of: card) else { return true}
         
@@ -327,10 +320,6 @@ open class KolodaView: UIView, DraggableCardDelegate {
         return delegate?.koloda(self, shouldDragCardAt: index) ?? true
     }
 
-    func card(cardSwipeSpeed card: DraggableCardView) -> DragSpeed {
-        return dataSource?.kolodaSpeedThatCardShouldDrag(self) ?? DragSpeed.default
-    }
-    
     // MARK: Private
     private func clear() {
         currentCardIndex = 0
@@ -392,7 +381,7 @@ open class KolodaView: UIView, DraggableCardDelegate {
         visibleCards.append(lastCard)
     }
     
-    private func animateCardsAfterLoadingWithCompletion(_ completion: ((Void) -> Void)? = nil) {
+    private func animateCardsAfterLoadingWithCompletion(_ completion: (() -> Void)? = nil) {
         for (index, currentCard) in visibleCards.enumerated() {
             currentCard.removeAnimations()
             

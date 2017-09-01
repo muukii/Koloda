@@ -9,14 +9,6 @@
 import UIKit
 import pop
 
-// muukii: unused
-public enum DragSpeed: TimeInterval {
-    case slow = 2.0
-    case moderate = 1.5
-    case `default` = 0.8
-    case fast = 0.4
-}
-
 public enum SwipeWay {
     case dragging
     case programmatically
@@ -29,10 +21,8 @@ protocol DraggableCardDelegate: class {
     func card(_ card: DraggableCardView, shouldSwipeIn direction: SwipeResultDirection) -> Bool
     func card(cardWasReset card: DraggableCardView)
     func card(cardWasTapped card: DraggableCardView)
-    func card(cardSwipeThresholdRatioMargin card: DraggableCardView) -> CGFloat?
     func card(cardAllowedDirections card: DraggableCardView) -> [SwipeResultDirection]
     func card(cardShouldDrag card: DraggableCardView) -> Bool
-    func card(cardSwipeSpeed card: DraggableCardView) -> DragSpeed
 }
 
 //Drag animation constants
@@ -47,7 +37,7 @@ private let cardResetAnimationSpringBounciness: CGFloat = 10.0
 private let cardResetAnimationSpringSpeed: CGFloat = 20.0
 private let cardResetAnimationKey = "resetPositionAnimation"
 private let cardResetAnimationDuration: TimeInterval = 0.2
-internal var cardSwipeActionAnimationDuration: TimeInterval = DragSpeed.default.rawValue
+internal var cardSwipeActionAnimationDuration: TimeInterval = 0.6
 
 public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
     
@@ -61,7 +51,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
     private var animationDirectionY: CGFloat = 1.0
     private var dragBegin = false
     private var dragDistance = CGPoint.zero
-    private var swipePercentageMargin: CGFloat = 0.0
+    private var swipePercentageMargin: CGFloat = 0.3
 
     
     //MARK: Lifecycle
@@ -79,17 +69,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         super.init(frame: frame)
         setup()
     }
-    
-    override public var frame: CGRect {
-        didSet {
-            if let ratio = delegate?.card(cardSwipeThresholdRatioMargin: self) , ratio != 0 {
-                swipePercentageMargin = ratio
-            } else {
-                swipePercentageMargin = 1.0
-            }
-        }
-    }
-    
+
     deinit {
         removeGestureRecognizer(panGestureRecognizer)
         removeGestureRecognizer(tapGestureRecognizer)
@@ -102,10 +82,6 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(DraggableCardView.tapRecognized(_:)))
         tapGestureRecognizer.cancelsTouchesInView = false
         addGestureRecognizer(tapGestureRecognizer)
-
-        if let delegate = delegate {
-            cardSwipeActionAnimationDuration = delegate.card(cardSwipeSpeed: self).rawValue
-        }
     }
     
     //MARK: Configurations
